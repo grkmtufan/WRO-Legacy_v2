@@ -1,0 +1,432 @@
+import motor
+import motor_pair
+import runloop
+from hub import motion_sensor, port
+import utime
+import color_sensor
+import hub
+import sys
+
+SOL_TEKER = port.D
+SAG_TEKER = port.C
+KALDIRAC = port.E
+RENK = port.F
+
+
+
+class Device:
+    def __init__(self, device_type, device_name, *args):
+        self.device_type = device_type
+        self.device_name = device_name
+        self.args = args
+
+def getGyro():
+    return -1*motion_sensor.tilt_angles()[0]
+
+def printGyro():
+    print(getGyro())
+
+#def raspi(c):
+#    return input(f"{c}:")
+
+
+
+def moveWithGyro(velocity:int, angle:int, duration:int, ST = motor.BRAKE):
+    utime.sleep_ms(30)
+    motor_pair.stop(motor_pair.PAIR_1, stop=ST)
+    start_time = utime.ticks_ms()
+    while utime.ticks_diff(utime.ticks_ms(), start_time) < duration:
+        adj = int(angle-getGyro())
+        motor_pair.move_tank(motor_pair.PAIR_1, velocity + adj, velocity - adj)
+
+
+    motor_pair.stop(motor_pair.PAIR_1,stop=ST)
+    utime.sleep_ms(30)
+
+def twoWheelTurn(angle:int):
+    motor_pair.stop(motor_pair.PAIR_1,stop=motor.BRAKE)
+    utime.sleep_ms(100)
+    init_gyro = getGyro()
+    oran_ti1 = -1*int((angle-init_gyro) * 4/11)
+    oran_ti2 = -1*int((angle-init_gyro) * 3/11)
+    oran_ti3 = -1*int(2/11 * (angle-init_gyro))
+    if angle>init_gyro:
+        while angle>= getGyro():
+            if 1/7 * angle > getGyro():
+                motor_pair.move_tank(motor_pair.PAIR_1, -1*oran_ti3, oran_ti3)
+            elif 4/7 * angle > getGyro():
+                motor_pair.move_tank(motor_pair.PAIR_1, -1*oran_ti1, oran_ti1)
+            elif 5/7 * angle > getGyro():
+                motor_pair.move_tank(motor_pair.PAIR_1, -1*oran_ti2, oran_ti2)
+            else:
+                motor_pair.move_tank(motor_pair.PAIR_1, 140, -1*140)
+
+        motor_pair.stop(motor_pair.PAIR_1,stop=motor.BRAKE)
+        return
+    else:
+        while angle <= getGyro():
+            if 1/7 * angle < getGyro():
+                motor_pair.move_tank(motor_pair.PAIR_1, -1*oran_ti3, oran_ti3)
+            elif 4/7 * angle < getGyro():
+                motor_pair.move_tank(motor_pair.PAIR_1, -1*oran_ti3, oran_ti3)
+            elif 5/7 * angle < getGyro():
+                motor_pair.move_tank(motor_pair.PAIR_1, -1*oran_ti3, oran_ti3)
+            else:
+                motor_pair.move_tank(motor_pair.PAIR_1, -1*140, 140)
+
+        motor_pair.stop(motor_pair.PAIR_1,stop=motor.BRAKE)
+        return
+
+def gyroRun(velocity:int, angle:int):
+    adj = int(angle-getGyro())
+    motor_pair.move_tank(motor_pair.PAIR_1, velocity + adj, velocity - adj)
+
+def fastfastTurn(angle:int, turnDir="f"):
+    # motor.run(port.A, 1000) positive
+    motor_pair.stop(motor_pair.PAIR_1,stop=motor.BRAKE)
+    utime.sleep_ms(30)
+    init_gyro = getGyro()
+    if turnDir == "f" or turnDir=="F":
+        mot1=SOL_TEKER # sol motor
+        mot2=SAG_TEKER # sag motor
+    else:
+        mot1=SAG_TEKER # sag motor
+        mot2=SOL_TEKER # sol motor
+    #angle<init_gyro
+    oran_ti1 = -1*int((angle-init_gyro) * 9/10)
+    oran_ti2 = -1*int((angle-init_gyro) * 7/10)
+    oran_ti3 = -1*int(5/10 * (angle-init_gyro))
+
+    if angle>init_gyro: #angle>0
+        while angle >= getGyro():
+            if 1/7 * angle > getGyro():
+                motor.run(mot1, oran_ti3)
+            elif 4/7 * angle > getGyro():
+                motor.run(mot1, oran_ti1)
+            elif 5/7 * angle > getGyro():
+                motor.run(mot1, oran_ti2)
+            else:
+                motor.run(mot1, -350)
+
+        motor.stop(mot1, stop=motor.BRAKE)
+    else:
+        while angle <= getGyro():#angle+init_gyro
+            if 1/7 * angle < getGyro():
+                motor.run(mot2, oran_ti3)
+            elif 4/7 * angle < getGyro():
+                motor.run(mot2, oran_ti1)
+            elif 5/7 * angle < getGyro():
+                motor.run(mot2, oran_ti2)
+            else:
+                motor.run(mot2, 350)
+
+        motor.stop(mot2, stop=motor.BRAKE)
+
+    motor_pair.stop(motor_pair.PAIR_1, stop=motor.BRAKE)
+    utime.sleep_ms(80)
+
+
+
+def twoWheelSlow(angle):
+    motor_pair.stop(motor_pair.PAIR_1,stop=motor.BRAKE)
+    utime.sleep_ms(100)
+    init_gyro = getGyro()
+    oran_ti1 = -1*int((angle-init_gyro) * 6/22)
+    oran_ti2 = -1*int((angle-init_gyro) * 4/22)
+    oran_ti3 = -1*int(3/22 * (angle-init_gyro))
+    if angle>init_gyro:
+        while angle>= getGyro():
+            if 1/7 * angle > getGyro():
+                motor_pair.move_tank(motor_pair.PAIR_1, -1*oran_ti3, oran_ti3)
+            elif 4/7 * angle > getGyro():
+                motor_pair.move_tank(motor_pair.PAIR_1, -1*oran_ti1, oran_ti1)
+            elif 5/7 * angle > getGyro():
+                motor_pair.move_tank(motor_pair.PAIR_1, -1*oran_ti2, oran_ti2)
+            else:
+                motor_pair.move_tank(motor_pair.PAIR_1, 140, -1*140)
+
+        motor_pair.stop(motor_pair.PAIR_1,stop=motor.BRAKE)
+
+    else:
+        while angle <= getGyro():
+            if 1/7 * angle < getGyro():
+                motor_pair.move_tank(motor_pair.PAIR_1, -1*oran_ti3, oran_ti3)
+            elif 4/7 * angle < getGyro():
+                motor_pair.move_tank(motor_pair.PAIR_1, -1*oran_ti3, oran_ti3)
+            elif 5/7 * angle < getGyro():
+                motor_pair.move_tank(motor_pair.PAIR_1, -1*oran_ti3, oran_ti3)
+            else:
+                motor_pair.move_tank(motor_pair.PAIR_1, -1*140, 140)
+
+        motor_pair.stop(motor_pair.PAIR_1,stop=motor.BRAKE)
+
+    utime.sleep_ms(50)
+
+def gyroTurn(angle:int, spid="f",turnDir="f", ST=motor.BRAKE):
+    # motor.run(port.A, 1000) positive
+    #motor_pair.stop(motor_pair.PAIR_1,stop=ST)
+    utime.sleep_ms(30)
+    init_gyro = getGyro()
+    if turnDir == "f" or turnDir=="F":
+        mot1=SOL_TEKER # sol motor
+        mot2=SAG_TEKER # sag motor
+    else:
+        mot1=SAG_TEKER # sag motor
+        mot2=SOL_TEKER # sol motor
+    if spid=="s" or spid=="S":
+        #angle<init_gyro
+        oran_ti1 = -1*int((angle-init_gyro)* 8/11)
+        oran_ti2 = -1*int((angle-init_gyro) * 6/11)
+        oran_ti3 = -1*int(4/11 * (angle-init_gyro))
+
+    else:
+        #angle<init_gyro
+        oran_ti1 = -1*int((angle-init_gyro) * 4/5)
+        oran_ti2 = -1*int((angle-init_gyro) * 3/5)
+        oran_ti3 = -1*int(2/5 * (angle-init_gyro))
+    if angle>init_gyro: #angle>0
+        while angle >= getGyro(): # angle+init_gyro
+            if 1/7 * angle > getGyro():
+                motor.run(mot1, oran_ti3)
+            elif 4/7 * angle > getGyro():
+                motor.run(mot1, oran_ti1)
+            elif 5/7 * angle > getGyro():
+                motor.run(mot1, oran_ti2)
+            else:
+                motor.run(mot1, -280)
+
+        motor.stop(mot1, stop=motor.BRAKE)
+    else:
+        while angle <= getGyro():
+
+            if 1/7 * angle < getGyro():
+                motor.run(mot2, oran_ti3)
+            elif 4/7 * angle < getGyro():
+                motor.run(mot2, oran_ti1)
+            elif 5/7 * angle < getGyro():
+                motor.run(mot2, oran_ti2)
+            else:
+                motor.run(mot2, 280)
+
+        motor.stop(mot2, stop=motor.BRAKE)
+    motor_pair.stop(motor_pair.PAIR_1, stop=motor.BRAKE)
+    utime.sleep_ms(140)
+
+def checkColor(minimum:int, maximum:int):
+    # range true döner. 90 siyahsa ve siyah görene kadar git ise 200 üstü örneğin
+    W = (color_sensor.rgbi(RENK)[0] + color_sensor.rgbi(RENK)[1] + color_sensor.rgbi(RENK)[2])/3
+    if W > minimum and W < maximum:
+        return True
+    else:
+        return False
+
+
+
+
+def printColor():
+    while(True):
+        print((color_sensor.rgbi(RENK)[0] + color_sensor.rgbi(RENK)[1] + color_sensor.rgbi(RENK)[2])/3)
+        utime.sleep_ms(800)
+
+def go180(velocity:int, duration:int, ST = motor.BRAKE):
+    utime.sleep_ms(40)
+    motor_pair.stop(motor_pair.PAIR_1, stop=ST)
+    start_time = utime.ticks_ms()
+    while utime.ticks_diff(utime.ticks_ms(), start_time) < duration:
+        if getGyro() == 1800 or getGyro() == -1800:
+            motor_pair.move_tank(motor_pair.PAIR_1, velocity, velocity)
+        elif getGyro() > -1800 and getGyro() > 0:
+            motor_pair.move_tank(motor_pair.PAIR_1, velocity + 30, velocity - 30)
+        else:
+            motor_pair.move_tank(motor_pair.PAIR_1, velocity - 30, velocity + 30)
+
+    motor_pair.stop(motor_pair.PAIR_1,stop=ST)
+    utime.sleep_ms(30)
+
+def hizlann(velocity:int, angle:int, duration:int, katsayi:int, ST = motor.BRAKE):
+    utime.sleep_ms(20)
+    motor_pair.stop(motor_pair.PAIR_1, stop=ST)
+    start_time = utime.ticks_ms()
+    init_velocity = 0
+    while utime.ticks_diff(utime.ticks_ms(), start_time) < duration:
+        adj = int(angle-getGyro())
+        if abs(velocity) <= init_velocity:
+            motor_pair.move_tank(motor_pair.PAIR_1, velocity + adj, velocity - adj)
+        else:
+            init_velocity = init_velocity + katsayi/duration
+
+
+    motor_pair.stop(motor_pair.PAIR_1,stop=ST)
+    utime.sleep_ms(30)
+
+def twoWheelHizli(angle:int):
+    motor_pair.stop(motor_pair.PAIR_1,stop=motor.BRAKE)
+    init_gyro = getGyro()
+    utime.sleep_ms(30)
+    oran_ti1 = -1*int((angle-init_gyro) * 8/11)
+    oran_ti2 = -1*int((angle-init_gyro) * 6/11)
+    oran_ti3 = -1*int(4/11 * (angle-init_gyro))
+    if angle>init_gyro:
+        while angle>= getGyro():
+            motor_pair.move_tank(motor_pair.PAIR_1, 200, -1*200)
+
+        motor_pair.stop(motor_pair.PAIR_1,stop=motor.BRAKE)
+        return
+    else:
+        while angle <= getGyro():
+            motor_pair.move_tank(motor_pair.PAIR_1, -1*200, 200)
+
+        motor_pair.stop(motor_pair.PAIR_1,stop=motor.BRAKE)
+        utime.sleep_ms(50)
+        return
+
+def hizliDon(angle:int, turnDir="f"):
+    # motor.run(port.A, 1000) positive
+    motor_pair.stop(motor_pair.PAIR_1,stop=motor.BRAKE)
+    init_gyro = getGyro()
+    if turnDir == "f" or turnDir=="F":
+        mot1=SOL_TEKER # sol motor
+        mot2=SAG_TEKER # sag motor
+    else:
+        mot1=SAG_TEKER # sag motor
+        mot2=SOL_TEKER # sol motor
+
+    if angle>init_gyro: #angle>0
+        while angle >= getGyro():
+            motor.run(mot1, -300)
+
+        motor.stop(mot1, stop=motor.BRAKE)
+    else:
+        while angle <= getGyro():#angle+init_gyro
+            motor.run(mot2, 300)
+
+        motor.stop(mot2, stop=motor.BRAKE)
+
+    motor_pair.stop(motor_pair.PAIR_1, stop=motor.BRAKE)
+    utime.sleep_ms(50)
+
+def raspi_call(function_name):
+    print(";" + function_name + "();")
+    response = sys.stdin.readline().strip()
+    return response
+
+
+def extract_result_from_json(response):
+    key = '"result":"'
+    start = response.find(key)
+
+    if start == -1:
+        print("PI RESPONSE ERROR:", response)
+        return ""
+
+    start += len(key)
+    end = response.find('"', start)
+
+    if end == -1:
+        print("PI RESULT PARSE ERROR:", response)
+        return ""
+
+    return response[start:end]
+
+
+
+def get_pick_plan_from_pi():
+    response = raspi_call("raspi_functions.detect")
+    csv_data = extract_result_from_json(response)
+
+    if csv_data == "":
+        return [], []
+
+    parts = [item.strip().upper() for item in csv_data.split(",") if item.strip()]
+
+    front_pick_sequence = []
+    back_pick_sequence = []
+
+    if len(parts) >= 8 and parts[0] == "FRONT" and parts[4] == "BACK":
+        front_pick_sequence = parts[1:4]
+        back_pick_sequence = parts[5:8]
+
+    return front_pick_sequence, back_pick_sequence
+
+
+def CollectPairsForSide(side_name, pick_sequence):
+    for step_index, color_name in enumerate(pick_sequence, start=1):
+        if step_index == 1:
+            # top
+            if color_name == "YELLOW":
+                # yapilacak is
+                pass
+            elif color_name == "GREEN":
+                # yapilacak is
+                pass
+            elif color_name == "BLUE":
+                # yapilacak is
+                pass
+            elif color_name == "WHITE":
+                # yapilacak is
+                pass
+
+        elif step_index == 2:
+            # bottom
+            if color_name == "YELLOW":
+                # yapilacak is
+                pass
+            elif color_name == "GREEN":
+                # yapilacak is
+                pass
+            elif color_name == "BLUE":
+                # yapilacak is
+                pass
+            elif color_name == "WHITE":
+                # yapilacak is
+                pass
+
+        elif step_index == 3:
+            # middle
+            if color_name == "YELLOW":
+                # yapilacak is
+                pass
+            elif color_name == "GREEN":
+                # yapilacak is
+                pass
+            elif color_name == "BLUE":
+                # yapilacak is
+                pass
+            elif color_name == "WHITE":
+                # yapilacak is
+                pass
+
+
+def PlaceSixForSide(side_name):
+    if side_name == "FRONT":
+        # yapilacak is
+        pass
+    elif side_name == "BACK":
+        # yapilacak is
+        pass
+
+
+def RunFullPlan(front_pick_sequence, back_pick_sequence):
+    CollectPairsForSide("FRONT", front_pick_sequence)
+    PlaceSixForSide("FRONT")
+
+    CollectPairsForSide("BACK", back_pick_sequence)
+    PlaceSixForSide("BACK")
+
+
+async def main():
+    motion_sensor.reset_yaw(0)
+    motion_sensor.set_yaw_face(motion_sensor.TOP)
+    motor_pair.pair(motor_pair.PAIR_1, SOL_TEKER, SAG_TEKER)
+
+    moveWithGyro(1000,0,1000)
+
+    front_pick_sequence, back_pick_sequence = get_pick_plan_from_pi()  #FOTO_ÇEKİLİYOR
+
+    print(front_pick_sequence)
+    print(back_pick_sequence)
+
+    RunFullPlan(front_pick_sequence, back_pick_sequence)  #FULL_PLAN_RUN
+
+
+runloop.run(main())
