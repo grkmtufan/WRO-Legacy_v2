@@ -1,0 +1,9 @@
+spiberry-engine
+colorzero
+gpiozero
+mpremote
+pyserial
+rpi-lgpio
+watchdog
+numpy
+opencv-python

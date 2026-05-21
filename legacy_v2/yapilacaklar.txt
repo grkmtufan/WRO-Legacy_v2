@@ -1,0 +1,66 @@
+YARISMA ONCESI VE BASLANGIC AKISI
+
+1. Raspberry Pi'yi ac.
+
+2. Gerekirse kalibrasyon yap.
+Komutlar:
+cd ~/primepi
+python3 hsv_range_calibrator.py --label blue
+python3 hsv_range_calibrator.py --label green
+python3 hsv_range_calibrator.py --label yellow
+python3 hsv_range_calibrator.py --label white
+
+3. Gerekirse color_grid_detector.py icindeki HSV_RANGES degerlerini guncelle.
+
+4. Engine'i baslat.
+Komut:
+/home/gorkem/.local/bin/spiberry run-engine
+
+5. Engine acik kalsin.
+
+6. Robotu baslangic noktasina koy.
+
+7. Sadece LEGO SPIKE Prime'in kendi tusuna bas.
+
+8. Robot calisinca:
+- ilk gorevleri SPIKE yapacak
+- mozaik kismina gelince Pi'den renk sirasini isteyecek
+- en sonda ColorMove ile renkleri yerlestirecek
+
+
+NOTLAR
+
+- color detector'i tek basina calistirmak icin:
+cd ~/primepi
+python3 color_grid_detector.py
+
+- canli goruntu ile denemek icin:
+cd ~/primepi
+python3 color_grid_detector.py --preview
+
+- kalibrasyon dosyasi:
+~/primepi/hsv_range_calibrator.py
+
+- detector dosyasi:
+~/primepi/color_grid_detector.py
+
+- Pi fonksiyonlari:
+~/primepi/raspi_functions/__init__.py
+
+
+USB TABANLI YENI PLAN
+
+1. Raspberry Pi'de su sunucu calisacak:
+cd ~/primepi
+python3 usb_plan_server.py
+
+2. SPIKE kendi tusuyla baslayacak.
+
+3. SPIKE, mozaik noktasina geldiginde Pi'den veri isteyecek.
+
+4. Pi cevap formati:
+<<<PLAN|BACK|YELLOW,YELLOW,BLUE,GREEN>>>
+
+5. SPIKE bunu ikiye ayiracak:
+- pick_sequence -> ColorMove
+- direction -> sona birakma fonksiyonu
